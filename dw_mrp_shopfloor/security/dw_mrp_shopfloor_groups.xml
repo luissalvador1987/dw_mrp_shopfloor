@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- A floor worker only needs the Shop Floor kiosk — not the rest of
+         Manufacturing's back-office (costs, BoM editing, planning). Regular
+         Manufacturing users already have everything this group grants,
+         plus the full back-office on top. -->
+    <record id="group_shopfloor_operator" model="res.groups">
+        <field name="name">Operario de Taller</field>
+        <field name="category_id" ref="base.module_category_manufacturing_manufacturing"/>
+        <field name="comment">Puede usar la pantalla de Taller (Shop Floor): ver sus órdenes de trabajo, iniciar/pausar/finalizar, ver y escanear materiales, ver instrucciones, y bloquear/desbloquear su centro de trabajo. No incluye el resto del back-office de Fabricación (costos, listas de materiales, planificación).</field>
+    </record>
+
+    <record id="mrp.group_mrp_user" model="res.groups">
+        <field name="implied_ids" eval="[(4, ref('group_shopfloor_operator'))]"/>
+    </record>
+</odoo>

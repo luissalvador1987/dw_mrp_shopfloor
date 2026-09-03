@@ -1,0 +1,232 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+
+    <t t-name="dw_mrp_shopfloor.Kiosk">
+        <div class="o_action o_dw_shopfloor h-100">
+            <Layout display="{ controlPanel: {} }">
+                <t t-set-slot="control-panel-create-button">
+                    <button t-if="state.screen !== 'workcenters'" type="button" class="btn btn-secondary me-2"
+                            t-on-click="backToWorkcenters">
+                        <i class="fa fa-th-large me-1"/>Centros de trabajo
+                    </button>
+                    <button t-if="state.screen === 'workorder'" type="button" class="btn btn-secondary me-2"
+                            t-on-click="backToQueue">
+                        <i class="fa fa-arrow-left me-1"/>Cola
+                    </button>
+                    <button t-if="state.screen !== 'workcenters'" type="button"
+                            t-attf-class="btn me-2 {{ state.workorder and state.workorder.working_state === 'blocked' ? 'btn-danger' : 'btn-outline-danger' }}"
+                            t-on-click="() => (state.workorder and state.workorder.working_state === 'blocked') ? this.unblockWorkcenter() : this.openBlockPanel()">
+                        <i class="fa fa-ban me-1"/>
+                        <t t-if="state.workorder and state.workorder.working_state === 'blocked'">Desbloquear</t>
+                        <t t-else="">Reportar avería</t>
+                    </button>
+                </t>
+
+                <div t-if="state.loading" class="p-5 text-center text-muted fs-3">Cargando…</div>
+
+                <!-- Screen 1: work center picker -->
+                <div t-elif="state.screen === 'workcenters'" class="o_dw_shopfloor_grid p-4">
+                    <div t-if="!state.workcenters.length" class="text-muted text-center p-5 fs-4">
+                        No hay centros de trabajo configurados.
+                    </div>
+                    <div class="row g-3">
+                        <div t-foreach="state.workcenters" t-as="wc" t-key="wc.id" class="col-6 col-md-4 col-lg-3">
+                            <div class="o_dw_shopfloor_card card h-100 p-3 text-center"
+                                 t-att-class="wc.working_state === 'blocked' ? 'border-danger' : ''"
+                                 t-on-click="() => this.openWorkcenter(wc.id)">
+                                <div class="fs-2 mb-2"><i class="fa fa-industry"/></div>
+                                <div class="fw-bold fs-4 mb-2" t-esc="wc.name"/>
+                                <div t-if="wc.working_state === 'blocked'" class="badge text-bg-danger">Bloqueado</div>
+                                <div t-else="" class="text-muted">
+                                    <span t-esc="wc.ready_count"/> listas · <span t-esc="wc.progress_count"/> en curso
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Screen 2: work order queue -->
+                <div t-elif="state.screen === 'queue'" class="o_dw_shopfloor_grid p-4">
+                    <div t-if="!state.queue.length" class="text-muted text-center p-5 fs-4">
+                        No hay órdenes de trabajo listas o en curso en este centro.
+                    </div>
+                    <div class="row g-3">
+                        <div t-foreach="state.queue" t-as="wo" t-key="wo.id" class="col-12 col-md-6">
+                            <div class="o_dw_shopfloor_card card p-3" t-on-click="() => this.openWorkorder(wo.id)">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div class="fw-bold fs-4" t-esc="wo.product_name"/>
+                                    <span t-attf-class="badge {{ wo.state === 'progress' ? 'text-bg-warning' : 'text-bg-primary' }}">
+                                        <t t-if="wo.state === 'progress'">En curso</t>
+                                        <t t-else="">Lista</t>
+                                    </span>
+                                </div>
+                                <div class="text-muted">
+                                    <span t-esc="wo.production_name"/> — <span t-esc="wo.name"/>
+                                </div>
+                                <div class="fs-5 mt-1">
+                                    <span t-esc="wo.qty_production"/> <span t-esc="wo.uom_name"/>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Screen 3: work order execution -->
+                <div t-elif="state.screen === 'workorder' and state.workorder" class="o_dw_shopfloor_workorder p-4">
+                    <div class="row">
+                        <div class="col-12 col-lg-7">
+                            <h2 t-esc="state.workorder.product_name"/>
+                            <div class="text-muted mb-3">
+                                <span t-esc="state.workorder.production_name"/> — <span t-esc="state.workorder.name"/>
+                            </div>
+
+                            <div class="d-flex align-items-center gap-4 mb-4">
+                                <div class="o_dw_shopfloor_timer fs-1 fw-bold" t-esc="formatElapsed(state.elapsedSeconds)"/>
+                                <div class="text-muted">
+                                    <div>Esperado: <t t-esc="state.workorder.duration_expected"/> min</div>
+                                    <div>Registrado: <t t-esc="Math.round(state.workorder.duration)"/> min</div>
+                                </div>
+                            </div>
+
+                            <div class="mb-4">
+                                <label class="form-label">Cantidad produciendo</label>
+                                <input type="number" step="any" class="form-control form-control-lg w-auto d-inline-block"
+                                       t-att-value="state.workorder.qty_producing"
+                                       t-on-change="onQtyProducingChange"/>
+                                <span class="ms-2 fs-5" t-esc="state.workorder.uom_name"/>
+                            </div>
+
+                            <div t-if="state.workorder.requires_finished_lot" class="mb-4">
+                                <label class="form-label">Lote/serie del producto terminado</label>
+                                <div t-if="state.workorder.finished_lot_name" class="fs-5">
+                                    <i class="fa fa-check-circle text-success me-1"/><t t-esc="state.workorder.finished_lot_name"/>
+                                </div>
+                                <div t-else="" class="input-group w-auto">
+                                    <input type="text" class="form-control" placeholder="Escanear o escribir…"
+                                           t-model="state.scanValue"
+                                           t-on-keydown="(ev) => ev.key === 'Enter' and this.onScanFinishedLot()"/>
+                                    <button class="btn btn-secondary" t-on-click="onScanFinishedLot">
+                                        <i class="fa fa-barcode"/>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div class="d-flex gap-2 flex-wrap">
+                                <button t-if="!state.workorder.is_user_working" type="button"
+                                        class="btn btn-success btn-lg" t-att-disabled="state.busy"
+                                        t-on-click="onStart">
+                                    <i class="fa fa-play me-1"/>Iniciar
+                                </button>
+                                <button t-else="" type="button" class="btn btn-warning btn-lg"
+                                        t-att-disabled="state.busy" t-on-click="onPause">
+                                    <i class="fa fa-pause me-1"/>Pausar
+                                </button>
+                                <button type="button" class="btn btn-primary btn-lg"
+                                        t-att-disabled="state.busy" t-on-click="onFinish">
+                                    <i class="fa fa-check me-1"/>Finalizar
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="col-12 col-lg-5">
+                            <ul class="nav nav-tabs mb-3">
+                                <li class="nav-item">
+                                    <a class="nav-link" t-attf-class="{{ state.activeTab === 'materials' ? 'active' : '' }}"
+                                       href="#" t-on-click.prevent="() => this.state.activeTab = 'materials'">
+                                        Materiales
+                                    </a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link" t-attf-class="{{ state.activeTab === 'instructions' ? 'active' : '' }}"
+                                       href="#" t-on-click.prevent="() => this.state.activeTab = 'instructions'">
+                                        Instrucciones
+                                    </a>
+                                </li>
+                            </ul>
+
+                            <div t-if="state.activeTab === 'materials'" class="o_dw_shopfloor_materials">
+                                <div t-if="!state.workorder.materials.length" class="text-muted">
+                                    Esta orden no consume materiales.
+                                </div>
+                                <div t-foreach="state.workorder.materials" t-as="mat" t-key="mat.move_id"
+                                     class="o_dw_shopfloor_material card p-2 mb-2"
+                                     t-att-class="{
+                                        'border-success': mat.is_done,
+                                        'border-primary': !mat.is_done and state.selectedMaterialMoveId === mat.move_id,
+                                     }"
+                                     t-on-click="() => (!mat.is_done and mat.tracking !== 'none') ? this.selectMaterial(mat.move_id) : null">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div class="fw-bold" t-esc="mat.product_name"/>
+                                        <div>
+                                            <span t-esc="mat.quantity_done"/> / <span t-esc="mat.quantity_needed"/>
+                                            <span t-esc="mat.uom_name"/>
+                                            <i t-if="mat.is_done" class="fa fa-check-circle text-success ms-1"/>
+                                        </div>
+                                    </div>
+                                    <div t-if="mat.lots.length" class="small text-muted">
+                                        <div t-foreach="mat.lots" t-as="lotline" t-key="lotline.move_line_id">
+                                            <t t-esc="lotline.lot_name"/> (<t t-esc="lotline.quantity"/>)
+                                            <a href="#" class="ms-1 text-danger"
+                                               t-on-click.prevent.stop="() => this.onRemoveMoveLine(lotline.move_line_id)">
+                                                <i class="fa fa-times"/>
+                                            </a>
+                                        </div>
+                                    </div>
+                                    <div t-if="!mat.is_done and mat.tracking !== 'none' and state.selectedMaterialMoveId === mat.move_id"
+                                         class="input-group input-group-sm mt-1" t-on-click.stop="() => {}">
+                                        <input type="text" class="form-control" placeholder="Escanear lote/serie…"
+                                               t-model="state.scanValueMaterial"
+                                               t-on-keydown="(ev) => ev.key === 'Enter' and this.onScanComponent()"/>
+                                        <button class="btn btn-outline-secondary" t-on-click="onScanComponent">
+                                            <i class="fa fa-barcode"/>
+                                        </button>
+                                    </div>
+                                    <button t-if="!mat.is_done and mat.tracking === 'none'" type="button"
+                                            class="btn btn-sm btn-outline-success mt-1"
+                                            t-on-click.stop="() => this.onMarkComponentDone(mat.move_id)">
+                                        <i class="fa fa-check me-1"/>Marcar consumido
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div t-if="state.activeTab === 'instructions'" class="o_dw_shopfloor_instructions">
+                                <div t-if="state.workorder.operation_note" t-out="state.workorder.operation_note"/>
+                                <iframe t-if="state.workorder.worksheet_type === 'pdf' and state.workorder.has_worksheet"
+                                        t-att-src="worksheetPdfUrl()" class="w-100 border-0" style="height: 60vh;"/>
+                                <iframe t-if="state.workorder.worksheet_type === 'google_slide' and state.workorder.worksheet_google_slide"
+                                        t-att-src="state.workorder.worksheet_google_slide" class="w-100 border-0" style="height: 60vh;"/>
+                                <div t-if="!state.workorder.operation_note and !state.workorder.has_worksheet and !state.workorder.worksheet_google_slide"
+                                     class="text-muted">
+                                    No hay instrucciones cargadas para esta operación.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Block work center overlay -->
+                <div t-if="state.showBlockPanel" class="o_dw_shopfloor_overlay">
+                    <div class="o_dw_shopfloor_overlay_content card p-4">
+                        <h4>Reportar avería / Bloquear centro de trabajo</h4>
+                        <div class="mb-3">
+                            <label class="form-label">Motivo</label>
+                            <select class="form-select" t-on-change="onSelectBlockReason">
+                                <option t-foreach="state.blockReasons" t-as="reason" t-key="reason.id"
+                                        t-att-value="reason.id" t-esc="reason.name"/>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Descripción (opcional)</label>
+                            <textarea class="form-control" t-on-change="onBlockDescriptionChange"/>
+                        </div>
+                        <div class="d-flex justify-content-end gap-2">
+                            <button class="btn btn-secondary" t-on-click="closeBlockPanel">Cancelar</button>
+                            <button class="btn btn-danger" t-att-disabled="state.busy" t-on-click="confirmBlock">Bloquear</button>
+                        </div>
+                    </div>
+                </div>
+            </Layout>
+        </div>
+    </t>
+
+</templates>

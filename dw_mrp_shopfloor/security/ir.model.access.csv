@@ -1,0 +1,9 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_dw_shopfloor_mrp_workcenter,mrp.workcenter (Shop Floor),mrp.model_mrp_workcenter,group_shopfloor_operator,1,1,0,0
+access_dw_shopfloor_mrp_workorder,mrp.workorder (Shop Floor),mrp.model_mrp_workorder,group_shopfloor_operator,1,1,0,0
+access_dw_shopfloor_mrp_production,mrp.production (Shop Floor),mrp.model_mrp_production,group_shopfloor_operator,1,0,0,0
+access_dw_shopfloor_mrp_workcenter_productivity,mrp.workcenter.productivity (Shop Floor),mrp.model_mrp_workcenter_productivity,group_shopfloor_operator,1,1,1,0
+access_dw_shopfloor_mrp_workcenter_productivity_loss,mrp.workcenter.productivity.loss (Shop Floor),mrp.model_mrp_workcenter_productivity_loss,group_shopfloor_operator,1,0,0,0
+access_dw_shopfloor_stock_move,stock.move (Shop Floor),stock.model_stock_move,group_shopfloor_operator,1,1,0,0
+access_dw_shopfloor_stock_move_line,stock.move.line (Shop Floor),stock.model_stock_move_line,group_shopfloor_operator,1,1,1,1
+access_dw_shopfloor_stock_lot,stock.lot (Shop Floor),stock.model_stock_lot,group_shopfloor_operator,1,1,1,0

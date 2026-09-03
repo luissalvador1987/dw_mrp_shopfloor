@@ -1,0 +1,44 @@
+.o_dw_shopfloor {
+    overflow-y: auto;
+
+    .o_dw_shopfloor_card {
+        cursor: pointer;
+        border-width: 2px;
+        transition: transform 0.1s ease-in-out;
+
+        &:active {
+            transform: scale(0.98);
+        }
+    }
+
+    .o_dw_shopfloor_timer {
+        font-variant-numeric: tabular-nums;
+        min-width: 4ch;
+    }
+
+    .o_dw_shopfloor_material {
+        cursor: pointer;
+        border-width: 2px;
+    }
+
+    .btn-lg {
+        min-height: 56px;
+        min-width: 140px;
+        font-size: 1.25rem;
+    }
+
+    .o_dw_shopfloor_overlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.5);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 1050;
+
+        .o_dw_shopfloor_overlay_content {
+            width: 90%;
+            max-width: 480px;
+        }
+    }
+}

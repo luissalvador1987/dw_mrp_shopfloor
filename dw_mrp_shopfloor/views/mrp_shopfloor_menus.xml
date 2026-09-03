@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="action_dw_mrp_shopfloor_kiosk" model="ir.actions.client">
+        <field name="name">Taller (Shop Floor)</field>
+        <field name="tag">dw_mrp_shopfloor_kiosk</field>
+    </record>
+
+    <!-- Its own top-level App menu, not nested inside Manufacturing: a pure
+         floor worker (group_shopfloor_operator only, without the rest of
+         Manufacturing) should land straight on the kiosk, not have to dig
+         for it inside a back-office app they can't otherwise use. -->
+    <menuitem id="menu_dw_mrp_shopfloor_root" name="Taller (Shop Floor)"
+              web_icon="dw_mrp_shopfloor,static/description/icon.png"
+              action="action_dw_mrp_shopfloor_kiosk"
+              groups="mrp.group_mrp_user,group_shopfloor_operator"
+              sequence="20"/>
+</odoo>
