@@ -17,7 +17,7 @@ import { Component, useState, useSubEnv, onWillStart, onWillUnmount } from "@odo
  * Three simple screens, no routing library: pick a work center, pick a
  * work order from its queue, work on it.
  */
-class DwMrpShopfloorKiosk extends Component {
+export class DwMrpShopfloorKiosk extends Component {
     static template = "dw_mrp_shopfloor.Kiosk";
     static components = { Layout };
     static props = ["*"];
